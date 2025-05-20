@@ -396,7 +396,8 @@ extension SwiftHealthKitReporterPlugin {
             let identifier = arguments["identifier"] as? String,
             let unit = arguments["unit"] as? String,
             let startTimestamp = arguments["startTimestamp"] as? Double,
-            let endTimestamp = arguments["endTimestamp"] as? Double
+            let endTimestamp = arguments["endTimestamp"] as? Double,
+            let limit = arguments["limit"] as? Int? ?? HKObjectQueryNoLimit
         else {
             throwParsingArgumentsError(result: result, arguments: arguments)
             return
@@ -410,7 +411,8 @@ extension SwiftHealthKitReporterPlugin {
             let query = try reporter.reader.quantityQuery(
                 type: type,
                 unit: unit,
-                predicate: predicate
+                predicate: predicate,
+                limit: limit
             ) { (quantities, error) in
                 guard error == nil else {
                     result(
@@ -447,7 +449,8 @@ extension SwiftHealthKitReporterPlugin {
         guard
             let identifier = arguments["identifier"] as? String,
             let startTimestamp = arguments["startTimestamp"] as? Double,
-            let endTimestamp = arguments["endTimestamp"] as? Double
+            let endTimestamp = arguments["endTimestamp"] as? Double,
+            let limit = arguments["limit"] as? Int? ?? HKObjectQueryNoLimit
         else {
             throwParsingArgumentsError(result: result, arguments: arguments)
             return
@@ -460,7 +463,8 @@ extension SwiftHealthKitReporterPlugin {
             )
             let query = try reporter.reader.categoryQuery(
                 type: type,
-                predicate: predicate
+                predicate: predicate,
+                limit: limit
             ) { (categories, error) in
                 guard error == nil else {
                     result(
@@ -497,7 +501,8 @@ extension SwiftHealthKitReporterPlugin {
         guard
             let startTimestamp = arguments["startTimestamp"] as? Double,
             let endTimestamp = arguments["endTimestamp"] as? Double,
-            let option = arguments["singleQueryOption"] as? String?
+            let option = arguments["singleQueryOption"] as? String?,
+            let limit = arguments["limit"] as? Int? ?? HKObjectQueryNoLimit
         else {
             throwParsingArgumentsError(result: result, arguments: arguments)
             return
@@ -522,7 +527,8 @@ extension SwiftHealthKitReporterPlugin {
         )
         do {
             let query = try reporter.reader.workoutQuery(
-                predicate: predicate
+                predicate: predicate,
+                limit: limit
             ) { (workouts, error) in
                 guard error == nil else {
                     result(
@@ -565,7 +571,8 @@ extension SwiftHealthKitReporterPlugin {
         guard
             let startTimestamp = arguments["startTimestamp"] as? Double,
             let endTimestamp = arguments["endTimestamp"] as? Double,
-            let withVoltageMeasurements = arguments["withVoltageMeasurements"] as? Bool
+            let withVoltageMeasurements = arguments["withVoltageMeasurements"] as? Bool,
+            let limit = arguments["limit"] as? Int? ?? HKObjectQueryNoLimit
         else {
             throwParsingArgumentsError(result: result, arguments: arguments)
             return
@@ -578,6 +585,7 @@ extension SwiftHealthKitReporterPlugin {
             do {
                 let query = try reporter.reader.electrocardiogramQuery(
                     predicate: predicate,
+                    limit: limit,
                     withVoltageMeasurements: withVoltageMeasurements
                 ) { (electrocardiograms, error) in
                     guard error == nil else {
@@ -630,7 +638,8 @@ extension SwiftHealthKitReporterPlugin {
         guard
             let identifier = arguments["identifier"] as? String,
             let startTimestamp = arguments["startTimestamp"] as? Double,
-            let endTimestamp = arguments["endTimestamp"] as? Double
+            let endTimestamp = arguments["endTimestamp"] as? Double,
+            let limit = arguments["limit"] as? Int? ?? HKObjectQueryNoLimit
         else {
             throwParsingArgumentsError(result: result, arguments: arguments)
             return
@@ -652,7 +661,8 @@ extension SwiftHealthKitReporterPlugin {
         do {
             let query = try reporter.reader.sampleQuery(
                 type: type,
-                predicate: predicate
+                predicate: predicate,
+                limit: limit
             ) { (_, samples, error) in
                 guard error == nil else {
                     result(
@@ -777,7 +787,8 @@ extension SwiftHealthKitReporterPlugin {
     ) {
         guard
             let startTimestamp = arguments["startTimestamp"],
-            let endTimestamp = arguments["endTimestamp"]
+            let endTimestamp = arguments["endTimestamp"],
+            let limit = arguments["limit"] as? Int? ?? HKObjectQueryNoLimit
         else {
             throwParsingArgumentsError(result: result, arguments: arguments)
             return
@@ -789,7 +800,8 @@ extension SwiftHealthKitReporterPlugin {
             )
             do {
                 let query = try reporter.reader.heartbeatSeriesQuery(
-                    predicate: predicate
+                    predicate: predicate,
+                    limit: limit
                 ) { (series, error) in
                     guard error == nil else {
                         result(
@@ -840,7 +852,8 @@ extension SwiftHealthKitReporterPlugin {
     ) {
         guard
             let startTimestamp = arguments["startTimestamp"],
-            let endTimestamp = arguments["endTimestamp"]
+            let endTimestamp = arguments["endTimestamp"],
+            let limit = arguments["limit"] as? Int? ?? HKObjectQueryNoLimit
         else {
             throwParsingArgumentsError(result: result, arguments: arguments)
             return
@@ -852,7 +865,8 @@ extension SwiftHealthKitReporterPlugin {
             )
             do {
                 let query = try reporter.reader.workoutRouteQuery(
-                    predicate: predicate
+                    predicate: predicate,
+                    limit: limit
                 ) { (routes, error) in
                     guard error == nil else {
                         result(

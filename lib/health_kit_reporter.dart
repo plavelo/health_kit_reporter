@@ -338,11 +338,15 @@ class HealthKitReporter {
     return series;
   }
 
-  /// Returns [WorkoutRoute] sample for the provided time interval predicate [predicate].
+  /// Returns [WorkoutRoute] sample for the provided time interval predicate [predicate]
+  /// and the limit of the elements [limit].
   ///
-  static Future<List<WorkoutRoute>> workoutRouteQuery(
-      Predicate predicate) async {
+  static Future<List<WorkoutRoute>> workoutRouteQuery(Predicate predicate,
+      {int? limit}) async {
     final arguments = predicate.map;
+    if (limit != null) {
+      arguments["limit"] = limit;
+    }
     final result =
         await _methodChannel.invokeMethod('workoutRouteQuery', arguments);
     final List<dynamic> list = jsonDecode(result);
@@ -355,16 +359,21 @@ class HealthKitReporter {
   }
 
   /// Returns [Quantity] samples for the provided [type],
-  /// the preferred [unit] and the time interval predicate [predicate].
+  /// the preferred [unit], the time interval predicate [predicate]
+  /// and the limit of the elements [limit].
   ///
   /// Warning: The [unit] should be valid. See [preferredUnits].
   ///
   static Future<List<Quantity>> quantityQuery(
-      QuantityType type, String unit, Predicate predicate) async {
+      QuantityType type, String unit, Predicate predicate,
+      {int? limit}) async {
     final arguments = <String, dynamic>{
       'identifier': type.identifier,
       'unit': unit,
     };
+    if (limit != null) {
+      arguments["limit"] = limit;
+    }
     arguments.addAll(predicate.map);
     final result =
         await _methodChannel.invokeMethod('quantityQuery', arguments);
@@ -377,14 +386,18 @@ class HealthKitReporter {
     return quantities;
   }
 
-  /// Returns [Category] samples for the provided [type]
-  /// and the time interval predicate [predicate].
+  /// Returns [Category] samples for the provided [type], the time interval predicate [predicate]
+  /// and the limit of the elements [limit].
   ///
   static Future<List<Category>> categoryQuery(
-      CategoryType type, Predicate predicate) async {
+      CategoryType type, Predicate predicate,
+      {int? limit}) async {
     final arguments = <String, dynamic>{
       'identifier': type.identifier,
     };
+    if (limit != null) {
+      arguments["limit"] = limit;
+    }
     arguments.addAll(predicate.map);
     final result =
         await _methodChannel.invokeMethod('categoryQuery', arguments);
@@ -398,12 +411,15 @@ class HealthKitReporter {
   }
 
   /// Returns [Workout] samples for the provided
-  /// time interval predicate [predicate].
+  /// time interval predicate [predicate] and the limit of the elements [limit].
   /// [queryOption] parameter represents the options passable to the native HealthKit sample query
   static Future<List<Workout>> workoutQuery(Predicate predicate,
-      {SampleQueryOption? queryOption}) async {
+      {int? limit, SampleQueryOption? queryOption}) async {
     var arguments = <String, dynamic>{};
     arguments.addAll(predicate.map);
+    if (limit != null) {
+      arguments["limit"] = limit;
+    }
     if (queryOption != null) {
       arguments["singleQueryOption"] = queryOption.value;
     }
@@ -418,14 +434,18 @@ class HealthKitReporter {
   }
 
   /// Returns [Electrocardiogram] samples for the provided
-  /// time interval predicate [predicate].
+  /// time interval predicate [predicate] and the limit of the elements [limit].
   ///
   static Future<List<Electrocardiogram>> electrocardiogramQuery(
       Predicate predicate,
-      {bool withVoltageMeasurements = false}) async {
+      {int? limit,
+      bool withVoltageMeasurements = false}) async {
     final arguments = <String, dynamic>{
       'withVoltageMeasurements': withVoltageMeasurements,
     };
+    if (limit != null) {
+      arguments["limit"] = limit;
+    }
     arguments.addAll(predicate.map);
     final result =
         await _methodChannel.invokeMethod('electrocardiogramQuery', arguments);
@@ -438,8 +458,8 @@ class HealthKitReporter {
     return electrocardiograms;
   }
 
-  /// Returns [Sample] samples for the provided [identifier] and the
-  /// time interval predicate [predicate].
+  /// Returns [Sample] samples for the provided [identifier], the
+  /// time interval predicate [predicate] and the limit of the elements [limit].
   ///
   /// If [identifier] was recognized as one of [QuantityType], the
   /// units will be set automatically by original
@@ -448,10 +468,14 @@ class HealthKitReporter {
   /// file [Extensions+HKQuantityType.swift]
   ///
   static Future<List<Sample>> sampleQuery(
-      String identifier, Predicate predicate) async {
+      String identifier, Predicate predicate,
+      {int? limit}) async {
     final arguments = <String, dynamic>{
       'identifier': identifier,
     };
+    if (limit != null) {
+      arguments["limit"] = limit;
+    }
     arguments.addAll(predicate.map);
     final result = await _methodChannel.invokeMethod('sampleQuery', arguments);
     final list = List.from(result);
@@ -486,11 +510,14 @@ class HealthKitReporter {
   }
 
   /// Returns [HeartbeatSerie] samples for the provided
-  /// time interval predicate [predicate].
+  /// time interval predicate [predicate] and the limit of the elements [limit].
   ///
-  static Future<List<ActivitySummary>> queryActivitySummary(
-      Predicate predicate) async {
+  static Future<List<ActivitySummary>> queryActivitySummary(Predicate predicate,
+      {int? limit}) async {
     final arguments = <String, dynamic>{};
+    if (limit != null) {
+      arguments["limit"] = limit;
+    }
     arguments.addAll(predicate.map);
     final result =
         await _methodChannel.invokeMethod('queryActivitySummary', arguments);
