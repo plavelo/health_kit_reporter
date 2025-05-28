@@ -358,56 +358,69 @@ class HealthKitReporter {
     return routes;
   }
 
-  /// Returns [Quantity] samples for the provided [type],
+  /// Returns [Quantity] samples for the provided [type] and [anchor],
   /// the preferred [unit], the time interval predicate [predicate]
   /// and the limit of the elements [limit].
   ///
   /// Warning: The [unit] should be valid. See [preferredUnits].
   ///
-  static Future<List<Quantity>> quantityQuery(
-      QuantityType type, String unit, Predicate predicate,
-      {int? limit}) async {
+  static Future<(List<Quantity>, String)> quantityQuery(
+      QuantityType type, String unit,
+      {Predicate? predicate, String? anchor, int? limit}) async {
     final arguments = <String, dynamic>{
       'identifier': type.identifier,
       'unit': unit,
     };
+    if (predicate != null) {
+      arguments.addAll(predicate.map);
+    }
+    if (anchor != null) {
+      arguments["anchor"] = anchor;
+    }
     if (limit != null) {
       arguments["limit"] = limit;
     }
-    arguments.addAll(predicate.map);
     final result =
         await _methodChannel.invokeMethod('quantityQuery', arguments);
-    final List<dynamic> list = jsonDecode(result);
+    final Map<String, dynamic> map = jsonDecode(result);
+    final list = map['quantities'] as List<dynamic>;
+    final newAnchor = map['anchor'] as String;
     final quantities = <Quantity>[];
     for (final Map<String, dynamic> map in list) {
       final quantity = Quantity.fromJson(map);
       quantities.add(quantity);
     }
-    return quantities;
+    return (quantities, newAnchor);
   }
 
   /// Returns [Category] samples for the provided [type], the time interval predicate [predicate]
   /// and the limit of the elements [limit].
   ///
-  static Future<List<Category>> categoryQuery(
-      CategoryType type, Predicate predicate,
-      {int? limit}) async {
+  static Future<(List<Category>, String)> categoryQuery(CategoryType type,
+      {Predicate? predicate, String? anchor, int? limit}) async {
     final arguments = <String, dynamic>{
       'identifier': type.identifier,
     };
+    if (predicate != null) {
+      arguments.addAll(predicate.map);
+    }
+    if (anchor != null) {
+      arguments["anchor"] = anchor;
+    }
     if (limit != null) {
       arguments["limit"] = limit;
     }
-    arguments.addAll(predicate.map);
     final result =
         await _methodChannel.invokeMethod('categoryQuery', arguments);
-    final List<dynamic> list = jsonDecode(result);
+    final Map<String, dynamic> map = jsonDecode(result);
+    final list = map['categories'] as List<dynamic>;
+    final newAnchor = map['anchor'] as String;
     final categories = <Category>[];
     for (final Map<String, dynamic> map in list) {
       final category = Category.fromJson(map);
       categories.add(category);
     }
-    return categories;
+    return (categories, newAnchor);
   }
 
   /// Returns [Workout] samples for the provided

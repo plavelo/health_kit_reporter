@@ -23,7 +23,8 @@ extension AnchoredObjectQueryStreamHandler: StreamHandlerProtocol {
         guard
             let identifiers = arguments["identifiers"] as? [String],
             let startTimestamp = arguments["startTimestamp"] as? Double,
-            let endTimestamp = arguments["endTimestamp"] as? Double
+            let endTimestamp = arguments["endTimestamp"] as? Double,
+            let anchor = arguments["anchor"] as? String?
         else {
             return
         }

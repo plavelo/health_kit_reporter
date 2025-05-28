@@ -7,7 +7,18 @@
 
 import Flutter
 import HealthKitReporter
+import struct HealthKitReporter.Category
 import HealthKit
+
+struct QuantitiesWithAnchor: Codable {
+    let quantities: [Quantity]
+    let anchor: String?
+}
+
+struct CategoriesWithAnchor: Codable {
+    let categories: [Category]
+    let anchor: String?
+}
 
 // MARK: - MethodCall
 extension SwiftHealthKitReporterPlugin {
@@ -387,6 +398,43 @@ extension SwiftHealthKitReporterPlugin {
             throwPlatformError(result: result, error: error)
         }
     }
+    private func encodeQueryAnchor(from anchor: HKQueryAnchor?) -> String? {
+        guard let anchor = anchor else {
+            return nil
+        }
+        do {
+            let data = try NSKeyedArchiver.archivedData(withRootObject: anchor, requiringSecureCoding: true)
+            return data.base64EncodedString()
+        } catch {
+            return nil
+        }
+    }
+    private func decodeQueryAnchor(from base64String: String?) -> HKQueryAnchor {
+        guard let base64String = base64String, !base64String.isEmpty else {
+            return HKQueryAnchor(
+                fromValue: Int(HKAnchoredObjectQueryNoAnchor)
+            )
+        }
+
+        guard let data = Data(base64Encoded: base64String) else {
+            return HKQueryAnchor(
+                fromValue: Int(HKAnchoredObjectQueryNoAnchor)
+            )
+        }
+        do {
+            if let anchor = try NSKeyedUnarchiver.unarchivedObject(ofClass: HKQueryAnchor.self, from: data) {
+                return anchor
+            } else {
+                return HKQueryAnchor(
+                    fromValue: Int(HKAnchoredObjectQueryNoAnchor)
+                )
+            }
+        } catch {
+            return HKQueryAnchor(
+                fromValue: Int(HKAnchoredObjectQueryNoAnchor)
+            )
+        }
+    }
     private func quantityQuery(
         reporter: HealthKitReporter,
         arguments: [String: Any],
@@ -395,26 +443,36 @@ extension SwiftHealthKitReporterPlugin {
         guard
             let identifier = arguments["identifier"] as? String,
             let unit = arguments["unit"] as? String,
-            let startTimestamp = arguments["startTimestamp"] as? Double,
-            let endTimestamp = arguments["endTimestamp"] as? Double,
-            let limit = arguments["limit"] as? Int? ?? HKObjectQueryNoLimit
+            let startTimestamp = arguments["startTimestamp"] as? Double?,
+            let endTimestamp = arguments["endTimestamp"] as? Double?,
+            let limit = arguments["limit"] as? Int? ?? HKObjectQueryNoLimit,
+            let anchor = arguments["anchor"] as? String?
         else {
             throwParsingArgumentsError(result: result, arguments: arguments)
             return
         }
         do {
             let type = try QuantityType.make(from: identifier)
-            let predicate = NSPredicate.samplesPredicate(
-                startDate: Date.make(from: startTimestamp),
-                endDate: Date.make(from: endTimestamp)
-            )
-            let query = try reporter.reader.quantityQuery(
+            let predicate = if let startTimestamp = startTimestamp, let endTimestamp = endTimestamp {
+                NSPredicate.samplesPredicate(
+                    startDate: Date.make(from: startTimestamp),
+                    endDate: Date.make(from: endTimestamp)
+                )
+            } else {
+                NSPredicate.allSamples
+            }
+            let queryAnchor = decodeQueryAnchor(from: anchor)
+            let query = try reporter.reader.anchoredObjectQuery(
                 type: type,
-                unit: unit,
                 predicate: predicate,
-                limit: limit
-            ) { (quantities, error) in
-                guard error == nil else {
+                anchor: queryAnchor,
+                limit: limit,
+                monitorUpdates: false
+            ) { (query, samples, deletedObjects, anchor, error) in
+                guard
+                    error == nil,
+                    let quantitySamples = samples as? [HKSample]
+                else {
                     result(
                         FlutterError(
                             code: "QuantityQuery",
@@ -424,8 +482,17 @@ extension SwiftHealthKitReporterPlugin {
                     )
                     return
                 }
+                let quantities = Quantity.collect(
+                    results: quantitySamples,
+                    unit: HKUnit.init(from: unit)
+                )
                 do {
-                    result(try quantities.encoded())
+                    result(
+                        try QuantitiesWithAnchor(
+                            quantities: quantities,
+                            anchor: self.encodeQueryAnchor(from: anchor)
+                        ).encoded()
+                    )
                 } catch {
                     result(
                         FlutterError(
@@ -448,25 +515,36 @@ extension SwiftHealthKitReporterPlugin {
     ) {
         guard
             let identifier = arguments["identifier"] as? String,
-            let startTimestamp = arguments["startTimestamp"] as? Double,
-            let endTimestamp = arguments["endTimestamp"] as? Double,
-            let limit = arguments["limit"] as? Int? ?? HKObjectQueryNoLimit
+            let startTimestamp = arguments["startTimestamp"] as? Double?,
+            let endTimestamp = arguments["endTimestamp"] as? Double?,
+            let limit = arguments["limit"] as? Int? ?? HKObjectQueryNoLimit,
+            let anchor = arguments["anchor"] as? String?
         else {
             throwParsingArgumentsError(result: result, arguments: arguments)
             return
         }
         do {
             let type = try CategoryType.make(from: identifier)
-            let predicate = NSPredicate.samplesPredicate(
-                startDate: Date.make(from: startTimestamp),
-                endDate: Date.make(from: endTimestamp)
-            )
-            let query = try reporter.reader.categoryQuery(
+            let predicate = if let startTimestamp = startTimestamp, let endTimestamp = endTimestamp {
+                NSPredicate.samplesPredicate(
+                    startDate: Date.make(from: startTimestamp),
+                    endDate: Date.make(from: endTimestamp)
+                )
+            } else {
+                NSPredicate.allSamples
+            }
+            let queryAnchor = decodeQueryAnchor(from: anchor)
+            let query = try reporter.reader.anchoredObjectQuery(
                 type: type,
                 predicate: predicate,
-                limit: limit
-            ) { (categories, error) in
-                guard error == nil else {
+                anchor: queryAnchor,
+                limit: limit,
+                monitorUpdates: false
+            ) { (query, samples, deletedObjects, anchor, error) in
+                guard
+                    error == nil,
+                    let categorySamples = samples as? [HKSample]
+                else {
                     result(
                         FlutterError(
                             code: "CategoryQuery",
@@ -476,8 +554,16 @@ extension SwiftHealthKitReporterPlugin {
                     )
                     return
                 }
+                let categories = Category.collect(
+                    results: categorySamples
+                )
                 do {
-                    result(try categories.encoded())
+                    result(
+                        try CategoriesWithAnchor(
+                            categories: categories,
+                            anchor: self.encodeQueryAnchor(from: anchor)
+                        ).encoded()
+                    )
                 } catch {
                     result(
                         FlutterError(
