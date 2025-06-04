@@ -470,8 +470,7 @@ extension SwiftHealthKitReporterPlugin {
                 monitorUpdates: false
             ) { (query, samples, deletedObjects, anchor, error) in
                 guard
-                    error == nil,
-                    let quantitySamples = samples as? [HKSample]
+                    error == nil
                 else {
                     result(
                         FlutterError(
@@ -482,10 +481,15 @@ extension SwiftHealthKitReporterPlugin {
                     )
                     return
                 }
-                let quantities = Quantity.collect(
-                    results: quantitySamples,
-                    unit: HKUnit.init(from: unit)
-                )
+                var quantities = [Quantity]()
+                for sample in samples {
+                    guard
+                        let quantitySample = sample as? Quantity
+                    else {
+                        continue
+                    }
+                    quantities.append(quantitySample)
+                }
                 do {
                     result(
                         try QuantitiesWithAnchor(
@@ -542,8 +546,7 @@ extension SwiftHealthKitReporterPlugin {
                 monitorUpdates: false
             ) { (query, samples, deletedObjects, anchor, error) in
                 guard
-                    error == nil,
-                    let categorySamples = samples as? [HKSample]
+                    error == nil
                 else {
                     result(
                         FlutterError(
@@ -554,9 +557,15 @@ extension SwiftHealthKitReporterPlugin {
                     )
                     return
                 }
-                let categories = Category.collect(
-                    results: categorySamples
-                )
+                var categories = [Category]()
+                for sample in samples {
+                    guard
+                        let categorySample = sample as? Category
+                    else {
+                        continue
+                    }
+                    categories.append(categorySample)
+                }
                 do {
                     result(
                         try CategoriesWithAnchor(
