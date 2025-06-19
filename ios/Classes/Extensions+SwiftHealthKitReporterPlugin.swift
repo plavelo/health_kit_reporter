@@ -489,7 +489,15 @@ extension SwiftHealthKitReporterPlugin {
                         else {
                             continue
                         }
-                        quantities.append(try quantitySample.converted(to: unit))
+                        let quantity = Quantity.init(
+                            identifier: quantitySample.identifier,
+                            startTimestamp: quantitySample.startTimestamp,
+                            endTimestamp: quantitySample.endTimestamp,
+                            device: nil, // ignore invalid devices
+                            sourceRevision: quantitySample.sourceRevision,
+                            harmonized: quantitySample.harmonized
+                        )
+                        quantities.append(try quantity.converted(to: unit))
                     }
                     result(
                         try QuantitiesWithAnchor(
