@@ -481,16 +481,16 @@ extension SwiftHealthKitReporterPlugin {
                     )
                     return
                 }
-                var quantities = [Quantity]()
-                for sample in samples {
-                    guard
-                        let quantitySample = sample as? Quantity
-                    else {
-                        continue
-                    }
-                    quantities.append(quantitySample)
-                }
                 do {
+                    var quantities = [Quantity]()
+                    for sample in samples {
+                        guard
+                            let quantitySample = sample as? Quantity
+                        else {
+                            continue
+                        }
+                        quantities.append(try quantitySample.converted(to: unit))
+                    }
                     result(
                         try QuantitiesWithAnchor(
                             quantities: quantities,
@@ -501,7 +501,7 @@ extension SwiftHealthKitReporterPlugin {
                     result(
                         FlutterError(
                             code: "QuantityQuery",
-                            message: "Error in json encoding of quantities: \(quantities)",
+                            message: "Error in json encoding of quantities: \(samples)",
                             details: error
                         )
                     )
